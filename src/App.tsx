@@ -128,7 +128,7 @@ export default function App() {
           onAnimationComplete={() => phase === 'entering' && setPhase('main')}
         >
           <Shell tab={tab} onTab={setTab} onMenu={() => setOverlay('menu')} sub={sub} fab={tab === 'memories' ? { label: 'أضيفي ذكرى', onClick: () => openAdd() } : undefined}>
-            {tab === 'memories' && <MemoriesPage memories={memories} fresh={fresh} onOpen={(id) => setOverlay({ view: id })} onAdd={() => openAdd()} />}
+            {tab === 'memories' && <MemoriesPage memories={memories} fresh={fresh} onOpen={(id) => setOverlay({ view: id })} onAdd={() => openAdd()} onStorage={() => setOverlay('menu')} />}
             {tab === 'letters' && <LettersPage birth={birth} />}
             {tab === 'growth' && <GrowthPage memories={memories} birth={birth} onAdd={(d) => openAdd(d)} onBirth={() => setOverlay('menu')} />}
             {tab === 'discover' && (
@@ -180,3 +180,5 @@ export default function App() {
     </MotionConfig>
   );
 }
+
+

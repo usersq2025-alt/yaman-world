@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import type { Memory } from '../types';
 import { buildPages } from '../lib/timeline';
@@ -49,7 +49,7 @@ export default function GrowthPage({ memories, birth, onAdd, onBirth }: Props) {
     <div className="growth">
       {!birth && (
         <p className="panel slim">
-          الصفحات الآن حسب الأشهر الميلادية. <button className="link small" onClick={onBirth}>أضيفي تاريخ الميلاد</button> لتصير حسب عمر يمان.
+          الصفحات حسب الأشهر الميلادية إلى أن تضيفي تاريخ ميلاد يمان.
         </p>
       )}
 
@@ -118,3 +118,4 @@ export default function GrowthPage({ memories, birth, onAdd, onBirth }: Props) {
     </div>
   );
 }
+
