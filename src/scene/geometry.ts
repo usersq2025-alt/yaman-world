@@ -1,18 +1,9 @@
-/** Pure data for the garden scene: seeded, so the picture is identical on every load. */
+﻿import { rng } from './rng';
+
+/** Geometry for the built-in placeholder art only. Memory slots live in slots.ts. */
 
 export interface P { x: number; y: number }
 export type Cubic = [P, P, P, P];
-
-export function rng(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 export function bez(c: Cubic, t: number): P {
   const u = 1 - t;
@@ -118,39 +109,6 @@ function scatter(seed: number, count: number, ok: (x: number, y: number) => bool
 export const BACK_LEAVES = scatter(7, 330, (x, y) => inCanopy(x, y, 1), 0);
 export const FRONT_LEAVES = scatter(21, 150, (x, y) => inCanopy(x, y, 1.02) && !inCanopy(x, y, 0.72) && !inHouse(x, y, 6), 0.12);
 
-/** Hanging points and drop lengths of the two lanterns; blossoms keep clear of the lit glass. */
-export const LANTERN_SPECS = [
-  { limb: 'l', x: 40, drop: 26 },
-  { limb: 'ul', x: 88, drop: 34 },
-];
-const LANTERNS: P[] = LANTERN_SPECS.map((s) => {
-  const p = onLimb(s.limb, s.x);
-  return { x: p.x, y: p.y + s.drop + 12 };
-});
-
-export interface Slot extends P { i: number }
-
-/** Where memory blossoms may grow: inside the canopy, never over the cabin or the signboard. Nearest the heart of the tree first. */
-function makeSlots(): Slot[] {
-  const r = rng(99);
-  const pts: P[] = [];
-  let minD = 40;
-  let guard = 0;
-  while (pts.length < 27) {
-    if (guard++ > 4000) { minD -= 3; guard = 0; }
-    const x = -4 + r() * 330;
-    const y = 30 + r() * 270;
-    if (!inCanopy(x, y, 0.88) || inHouse(x, y, 10)) continue;
-    if (x > 228 && y > 258) continue;
-    if (LANTERNS.some((p) => Math.hypot(p.x - x, p.y - y) < 30)) continue;
-    if (pts.some((p) => Math.hypot(p.x - x, p.y - y) < minD)) continue;
-    pts.push({ x, y });
-  }
-  pts.sort((a, b) => Math.hypot(a.x - 150, a.y - 300) - Math.hypot(b.x - 150, b.y - 300));
-  return pts.map((p, i) => ({ ...p, i }));
-}
-export const SLOTS = makeSlots();
-
 export interface Flower { x: number; y: number; s: number; kind: number; h: number; r: number }
 export function groundFlowers(): Flower[] {
   const r = rng(5);
@@ -176,3 +134,5 @@ export function grassBlades(): string[] {
   }
   return out;
 }
+
+

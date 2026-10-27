@@ -246,3 +246,10 @@ textarea { resize: vertical; line-height: 1.7; }
 .flap { animation: flap .45s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .rays { animation: rays 9s ease-in-out infinite; }
 
+
+/* optional mailbox art: swaps to the open image on hover or keyboard focus */
+.mailbox { cursor: pointer; outline: none; }
+.mailbox .mb-open { opacity: 0; transition: opacity .25s; }
+.mailbox:hover .mb-open, .mailbox:focus-visible .mb-open { opacity: 1; }
+.mailbox:hover .mb-closed, .mailbox:focus-visible .mb-closed { opacity: 0; }
+.mailbox .mb-closed { transition: opacity .25s; }
