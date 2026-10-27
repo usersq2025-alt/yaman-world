@@ -121,6 +121,7 @@ export default function App() {
             onDiscover={() => setOverlay('discover')}
             onTimeline={() => setOverlay('timeline')}
             onLetters={() => setOverlay('letters')}
+            onMemories={() => (sorted.length ? setOverlay({ view: sorted[sorted.length - 1].id }) : (setAddDate(undefined), setOverlay('add')))}
           />
         </motion.div>
       )}
@@ -171,4 +172,5 @@ export default function App() {
     </MotionConfig>
   );
 }
+
 
