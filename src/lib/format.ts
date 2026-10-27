@@ -1,4 +1,4 @@
-const pad = (n: number) => String(n).padStart(2, '0');
+﻿const pad = (n: number) => String(n).padStart(2, '0');
 
 export function toStr(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -11,11 +11,11 @@ export function addDays(s: string, n: number): string {
   return toStr(d);
 }
 
-const dateFmt = new Intl.DateTimeFormat('ar-u-ca-gregory-nu-arab', { day: 'numeric', month: 'long', year: 'numeric' });
-const monthFmt = new Intl.DateTimeFormat('ar-u-ca-gregory-nu-arab', { month: 'long', year: 'numeric' });
+const dateFmt = new Intl.DateTimeFormat('ar-u-ca-gregory-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' });
+const monthFmt = new Intl.DateTimeFormat('ar-u-ca-gregory-nu-latn', { month: 'long', year: 'numeric' });
 export const formatDate = (s: string) => dateFmt.format(parse(s));
 export const formatMonth = (s: string) => monthFmt.format(parse(s));
-export const num = (n: number) => n.toLocaleString('ar-EG');
+export const num = (n: number) => n.toLocaleString('en-US');
 
 /** Arabic counted noun: [one, two, few(3-10), many(11+)] */
 function counted(n: number, f: [string, string, string, string]): string {
@@ -56,3 +56,4 @@ export function ageText(birth: string, at: string): string | null {
 }
 
 export const daysUntil = (s: string) => Math.round((parse(s).getTime() - parse(todayStr()).getTime()) / 86400000);
+

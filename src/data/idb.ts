@@ -1,4 +1,4 @@
-import type { LetterMeta, Memory, MemoryRepo, Settings } from '../types';
+﻿import type { LetterMeta, Memory, MemoryRepo, Settings } from '../types';
 import { todayStr } from '../lib/format';
 
 const DB_NAME = 'yaman-world';
@@ -60,6 +60,13 @@ export const idbRepo: MemoryRepo = {
       s.delete(id);
     });
   },
+  async updateMemory(id, patch) {
+    const cur = await run<Memory>(MEM, 'readonly', (s) => s.get(id));
+    if (!cur) return;
+    await run(MEM, 'readwrite', (s) => {
+      s.put({ ...cur, ...(patch.date ? { date: patch.date } : {}), ...(patch.text !== undefined ? { text: patch.text } : {}) });
+    });
+  },
   async removeDemos() {
     const all = await this.listMemories();
     await run(MEM, 'readwrite', (s) => {
@@ -103,6 +110,25 @@ export const idbRepo: MemoryRepo = {
     if (!meta || meta.openAt > todayStr()) return null;
     const body = await run<{ text?: string; blob?: Blob }>(LET_BODY, 'readonly', (s) => s.get(id));
     return { ...meta, text: body?.text, blob: body?.blob };
+  },
+  async getLetterForEdit(id) {
+    const meta = await run<LetterMeta>(LET, 'readonly', (s) => s.get(id));
+    if (!meta) return null;
+    const body = await run<{ text?: string; blob?: Blob }>(LET_BODY, 'readonly', (s) => s.get(id));
+    return { ...meta, text: body?.text, blob: body?.blob };
+  },
+  async updateLetter(id, patch) {
+    const meta = await run<LetterMeta>(LET, 'readonly', (s) => s.get(id));
+    if (!meta) return;
+    const d = await db();
+    const body = await run<{ id: string; text?: string; blob?: Blob }>(LET_BODY, 'readonly', (s) => s.get(id));
+    await new Promise<void>((resolve, reject) => {
+      const t = d.transaction([LET, LET_BODY], 'readwrite');
+      t.objectStore(LET).put({ ...meta, ...(patch.occasion !== undefined ? { occasion: patch.occasion } : {}), ...(patch.openAt ? { openAt: patch.openAt } : {}) });
+      if (patch.text !== undefined) t.objectStore(LET_BODY).put({ ...(body ?? { id }), id, text: patch.text });
+      t.oncomplete = () => resolve();
+      t.onerror = t.onabort = () => reject(t.error);
+    });
   },
   async removeLetter(id) {
     const d = await db();
@@ -154,3 +180,4 @@ export const idbRepo: MemoryRepo = {
     return restored;
   },
 };
+

@@ -2,6 +2,7 @@
 import { repo } from '../data';
 import { todayStr } from '../lib/format';
 import Sheet from './Sheet';
+import DateField from './DateField';
 import Icon from './Icons';
 
 interface Props {
@@ -22,7 +23,7 @@ export default function Menu({ birth, hasDemos, onBirth, onClose, onRemoveDemos,
   useEffect(() => {
     navigator.storage?.estimate?.().then((e) => {
       if (e.usage == null || !e.quota) return;
-      const mb = (n: number) => Math.round(n / 1048576).toLocaleString('ar-EG');
+      const mb = (n: number) => Math.round(n / 1048576).toLocaleString('en-US');
       setSpace(`المستخدم الآن ${mb(e.usage)} ميغابايت من نحو ${mb(e.quota)}.`);
     }).catch(() => {});
   }, []);
@@ -66,12 +67,8 @@ export default function Menu({ birth, hasDemos, onBirth, onClose, onRemoveDemos,
       <section className="group">
         <h3>تاريخ ميلاد يمان</h3>
         <p className="hint">يُستخدم لإظهار عمر يمان في كل ذكرى. لم أضع أي تاريخ من عندي.</p>
-        <div className="row">
-          <input type="date" aria-label="تاريخ ميلاد يمان" value={birth ?? ''} max={todayStr()} onChange={(e) => onBirth(e.target.value || null)} />
-          {birth && (
-            <button className="ghost" onClick={() => onBirth(null)}>مسح</button>
-          )}
-        </div>
+        <DateField label="" value={birth ?? ''} max={todayStr()} placeholder="اختاري تاريخ الميلاد" onChange={(d) => onBirth(d || null)} />
+        {birth && <button className="link small" onClick={() => onBirth(null)}>مسح التاريخ</button>}
       </section>
 
       <section className="group">
@@ -98,4 +95,6 @@ export default function Menu({ birth, hasDemos, onBirth, onClose, onRemoveDemos,
     </Sheet>
   );
 }
+
+
 

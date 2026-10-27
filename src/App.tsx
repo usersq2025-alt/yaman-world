@@ -10,13 +10,14 @@ import Shell, { type Tab } from './components/Shell';
 import AddMemory from './components/AddMemory';
 import Viewer from './components/Viewer';
 import Menu from './components/Menu';
+import Slideshow from './components/Slideshow';
 import MemoriesPage from './pages/MemoriesPage';
 import LettersPage from './pages/LettersPage';
 import GrowthPage from './pages/GrowthPage';
 import DiscoverPage from './pages/DiscoverPage';
 
 type Phase = 'intro' | 'entering' | 'main';
-type Overlay = null | 'add' | 'menu' | { view: string };
+type Overlay = null | 'add' | 'menu' | 'slideshow' | { view: string };
 
 const seenIntro = () => {
   try { return localStorage.getItem('yaman-intro') === '1'; } catch { return false; }
@@ -94,6 +95,16 @@ export default function App() {
     say('حُذفت الذكرى من هذا الجهاز.');
   };
 
+  const update = async (id: string, patch: { date?: string; text?: string }) => {
+    await repo.updateMemory(id, patch);
+    await refresh();
+  };
+
+  const slideList = useMemo(() => {
+    const real = sorted.filter((m) => !m.demo);
+    return real.length ? real : sorted;
+  }, [sorted]);
+
   const viewId = overlay && typeof overlay === 'object' ? overlay.view : null;
   const viewIndex = viewId ? sorted.findIndex((m) => m.id === viewId) : -1;
   const close = useCallback(() => setOverlay(null), []);
@@ -128,8 +139,8 @@ export default function App() {
           onAnimationComplete={() => phase === 'entering' && setPhase('main')}
         >
           <Shell tab={tab} onTab={setTab} onMenu={() => setOverlay('menu')} sub={sub} fab={tab === 'memories' ? { label: 'أضيفي ذكرى', onClick: () => openAdd() } : undefined}>
-            {tab === 'memories' && <MemoriesPage memories={memories} fresh={fresh} onOpen={(id) => setOverlay({ view: id })} onAdd={() => openAdd()} onStorage={() => setOverlay('menu')} />}
-            {tab === 'letters' && <LettersPage birth={birth} />}
+            {tab === 'memories' && <MemoriesPage memories={memories} fresh={fresh} onOpen={(id) => setOverlay({ view: id })} onAdd={() => openAdd()} onStorage={() => setOverlay('menu')} onSlideshow={() => setOverlay('slideshow')} />}
+            {tab === 'letters' && <LettersPage />}
             {tab === 'growth' && <GrowthPage memories={memories} birth={birth} onAdd={(d) => openAdd(d)} onBirth={() => setOverlay('menu')} />}
             {tab === 'discover' && (
               <DiscoverPage
@@ -171,8 +182,9 @@ export default function App() {
             }}
           />
         )}
+        {overlay === 'slideshow' && <Slideshow key="slideshow" list={slideList} birth={birth} onClose={close} />}
         {viewIndex >= 0 && (
-          <Viewer key="viewer" list={sorted} index={viewIndex} birth={birth} onIndex={(i) => setOverlay({ view: sorted[i].id })} onClose={close} onDelete={remove} />
+          <Viewer key="viewer" list={sorted} index={viewIndex} birth={birth} onIndex={(i) => setOverlay({ view: sorted[i].id })} onClose={close} onDelete={remove} onUpdate={update} />
         )}
       </AnimatePresence>
 
@@ -180,5 +192,8 @@ export default function App() {
     </MotionConfig>
   );
 }
+
+
+
 
 

@@ -42,6 +42,8 @@ export interface MemoryRepo {
   listMemories(): Promise<Memory[]>;
   addMemories(items: Memory[]): Promise<void>;
   removeMemory(id: string): Promise<void>;
+  /** Changes the date and/or description of a saved memory. The media itself is never touched. */
+  updateMemory(id: string, patch: { date?: string; text?: string }): Promise<void>;
   removeDemos(): Promise<void>;
   getSettings(): Promise<Settings>;
   saveSettings(s: Settings): Promise<void>;
@@ -53,7 +55,11 @@ export interface MemoryRepo {
   /** Returns the body only once `openAt` has arrived; otherwise null. In production this check belongs on the server. */
   openLetter(id: string): Promise<Letter | null>;
   removeLetter(id: string): Promise<void>;
+  /** For the author editing a letter: returns the full letter even while it is still locked. */
+  getLetterForEdit(id: string): Promise<Letter | null>;
+  updateLetter(id: string, patch: { occasion?: string; openAt?: string; text?: string }): Promise<void>;
   exportBackup(): Promise<Blob>;
   importBackup(file: File): Promise<number>;
 }
+
 

@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Kind, Memory } from '../types';
-import { todayStr } from '../lib/format';
+import { addDays, todayStr } from '../lib/format';
+import DateField from './DateField';
 import { newId } from '../lib/id';
 import { prepareImage } from '../lib/image';
 import { storageErrorMessage } from '../lib/errors';
@@ -175,10 +176,7 @@ export default function AddMemory({ birth, initialDate, onClose, onSave }: Props
             </ul>
           )}
 
-          <label className="field">
-            <span>تاريخ الذكرى</span>
-            <input type="date" value={date} max={todayStr()} min={birth ?? undefined} onChange={(e) => setDate(e.target.value || todayStr())} required />
-          </label>
+          <DateField label="تاريخ الذكرى" value={date} max={todayStr()} min={birth ?? undefined} onChange={setDate} shortcuts={[{ label: 'اليوم', value: todayStr() }, { label: 'أمس', value: addDays(todayStr(), -1) }]} />
           <label className="field">
             <span>وصف (اختياري)</span>
             <textarea rows={3} value={text} maxLength={600} placeholder="ما الذي تريدين تذكّره؟" onChange={(e) => setText(e.target.value)} />
@@ -193,4 +191,5 @@ export default function AddMemory({ birth, initialDate, onClose, onSave }: Props
     </Sheet>
   );
 }
+
 

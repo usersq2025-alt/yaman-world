@@ -18,6 +18,12 @@
   sprout: 'M12 21v-9M12 12c0-4-3-6-7-6 0 4 2 6 7 6zM12 14c0-3 2-5 6-5 0 3-2 5-6 5z',
   lock: 'M7 11V8a5 5 0 0110 0v3M6 11h12v9H6z',
   play: 'M8 5l11 7-11 7z',
+  calendar: 'M5 6h14v14H5zM5 10h14M9 4v4M15 4v4',
+  edit: 'M4 20h4L19 9l-4-4L4 16zM13 7l4 4',
+  pause: 'M8 6v12M16 6v12',
+  slideshow: 'M4 5h16v11H4zM9 20h6M12 16v4M10 8.5v4l4-2z',
+  share: 'M12 4v11M8 8l4-4 4 4M5 13v7h14v-7',
+  more: 'M12 6h.01M12 12h.01M12 18h.01',
   stop: 'M7 7h10v10H7z',
 };
 
@@ -28,4 +34,5 @@ export default function Icon({ name, size = 22 }: { name: keyof typeof P; size?:
     </svg>
   );
 }
+
 

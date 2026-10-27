@@ -1,10 +1,44 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import type { Memory } from '../types';
-import { buildPages } from '../lib/timeline';
-import { memoriesLabel, num } from '../lib/format';
+import { buildPages, type Page } from '../lib/timeline';
+import { memoriesLabel, num, parse } from '../lib/format';
 import MemoryCard, { useMediaUrl } from '../components/MemoryCard';
 import Icon from '../components/Icons';
+
+const YEAR_ORD = ['الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة', 'السادسة', 'السابعة', 'الثامنة', 'التاسعة', 'العاشرة', 'الحادية عشرة', 'الثانية عشرة'];
+const monthLong = new Intl.DateTimeFormat('ar-u-ca-gregory-nu-latn', { month: 'long' });
+
+/**
+ * The journey is two levels so it stays usable for years: pick a year (by Yaman's age once the
+ * birth date is known, otherwise by calendar year), then one of that year's months. Every chip
+ * and cell shows how many memories it holds, so a long childhood can be scanned at a glance.
+ */
+interface Year { id: number; label: string; sub: string; pages: Page[]; count: number }
+
+function yearId(p: Page): number {
+  if (p.index !== null) return Math.floor(p.index / 12);
+  if (p.key === 'pre') return -1;
+  return Number(p.key.slice(0, 4));
+}
+
+function groupYears(pages: Page[], byAge: boolean): Year[] {
+  const map = new Map<number, Page[]>();
+  for (const p of pages) map.set(yearId(p), [...(map.get(yearId(p)) ?? []), p]);
+  return [...map.entries()].map(([id, ps]) => ({
+    id,
+    pages: ps,
+    count: ps.reduce((n, p) => n + p.items.length, 0),
+    label: !byAge ? String(id) : id === -1 ? 'قبل الميلاد' : id < 12 ? `السنة ${YEAR_ORD[id]}` : `السنة ${id + 1}`,
+    sub: byAge && id >= 0 ? `من عمر ${id} إلى ${id + 1}` : '',
+  }));
+}
+
+function cellLabel(p: Page, byAge: boolean): string {
+  if (byAge && p.index !== null) return String((p.index % 12) + 1);
+  if (p.key === 'pre') return '•';
+  return monthLong.format(parse(`${p.key}-01`));
+}
 
 function Thumb({ m, on, onClick }: { m: Memory; on: boolean; onClick: () => void }) {
   const url = useMediaUrl(m);
@@ -24,12 +58,15 @@ interface Props {
 
 export default function GrowthPage({ memories, birth, onAdd, onBirth }: Props) {
   const pages = useMemo(() => buildPages(memories, birth), [memories, birth]);
+  const byAge = !!birth;
+  const years = useMemo(() => groupYears(pages, byAge), [pages, byAge]);
   const [i, setI] = useState(pages.length - 1);
   const [dir, setDir] = useState(0);
   const [sel, setSel] = useState(0);
-  const strip = useRef<HTMLDivElement>(null);
+  const yearStrip = useRef<HTMLDivElement>(null);
   const idx = Math.min(i, pages.length - 1);
   const page = pages[idx];
+  const year = years.find((y) => y.id === yearId(page)) ?? years[years.length - 1];
 
   const go = (n: number) => {
     if (n < 0 || n >= pages.length || n === idx) return;
@@ -38,27 +75,43 @@ export default function GrowthPage({ memories, birth, onAdd, onBirth }: Props) {
     setSel(0);
   };
 
+  const pickYear = (y: Year) => {
+    const withMem = [...y.pages].reverse().find((p) => p.items.length) ?? y.pages[y.pages.length - 1];
+    go(pages.indexOf(withMem));
+  };
+
   useEffect(() => {
-    strip.current?.querySelector('[aria-current=true]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
-  }, [idx]);
+    yearStrip.current?.querySelector('[aria-current=true]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+  }, [year?.id]);
 
   const m = page.items[Math.min(sel, page.items.length - 1)];
-  const chipLabel = (p: (typeof pages)[number]) => (p.index !== null ? num(p.index + 1) : p.key === 'pre' ? '٠' : p.title.split(' ')[0]);
 
   return (
     <div className="growth">
-      {!birth && (
-        <p className="panel slim">
-          الصفحات حسب الأشهر الميلادية إلى أن تضيفي تاريخ ميلاد يمان.
-        </p>
+      {!birth && <p className="panel slim">الصفحات حسب السنوات والأشهر الميلادية إلى أن تضيفي تاريخ ميلاد يمان.</p>}
+
+      {years.length > 1 && (
+        <div className="years-strip" ref={yearStrip} role="tablist" aria-label="السنوات">
+          {years.map((y) => (
+            <button key={y.id} role="tab" aria-selected={y.id === year.id} aria-current={y.id === year.id} className={`year-chip ${y.id === year.id ? 'on' : ''}`} onClick={() => pickYear(y)}>
+              <b>{y.label}</b>
+              <small>{y.sub ? `${y.sub} · ${num(y.count)}` : memoriesLabel(y.count)}</small>
+            </button>
+          ))}
+        </div>
       )}
 
-      <div className="strip" ref={strip} role="tablist" aria-label="أشهر يمان">
-        {pages.map((p, n) => (
-          <button key={p.key} role="tab" aria-selected={n === idx} aria-current={n === idx} aria-label={p.title} className={`chip ${n === idx ? 'on' : ''} ${p.items.length ? 'has' : ''}`} onClick={() => go(n)}>
-            {chipLabel(p)}
-          </button>
-        ))}
+      <div className="months-grid" role="tablist" aria-label="الأشهر">
+        {year.pages.map((p) => {
+          const n = pages.indexOf(p);
+          return (
+            <button key={p.key} role="tab" aria-selected={n === idx} aria-current={n === idx} aria-label={`${p.title}، ${memoriesLabel(p.items.length)}`} className={`month-cell ${n === idx ? 'on' : ''} ${p.items.length ? 'has' : ''}`} onClick={() => go(n)}>
+              <span className="mc-label">{cellLabel(p, byAge)}</span>
+              {byAge && <small>شهر</small>}
+              {p.items.length > 0 && <em>{num(p.items.length)}</em>}
+            </button>
+          );
+        })}
       </div>
 
       <div className="book">
@@ -76,7 +129,7 @@ export default function GrowthPage({ memories, birth, onAdd, onBirth }: Props) {
             className="panel page-panel"
           >
             <div className="page-head">
-              <h2>{page.title}</h2>
+              <h2>{page.title}{byAge && page.index !== null ? <small className="yr"> · {year.label}</small> : null}</h2>
               {page.subtitle && <p className="hint">{page.subtitle}</p>}
               <p className="hint">{memoriesLabel(page.items.length)}</p>
             </div>
@@ -115,7 +168,10 @@ export default function GrowthPage({ memories, birth, onAdd, onBirth }: Props) {
           </motion.section>
         </AnimatePresence>
       </div>
+
+      {!birth && (
+        <button className="link small" onClick={onBirth}>أضيفي تاريخ ميلاد يمان لتصير الصفحات حسب عمره</button>
+      )}
     </div>
   );
 }
-
