@@ -1,4 +1,4 @@
-const P: Record<string, string> = {
+﻿const P: Record<string, string> = {
   plus: 'M12 5v14M5 12h14',
   menu: 'M4 8h16M4 16h10',
   close: 'M6 6l12 12M18 6L6 18',
@@ -13,6 +13,11 @@ const P: Record<string, string> = {
   upload: 'M12 16V5M7 9l5-5 5 5M5 20h14',
   sparkle: 'M12 4c1 5 3 7 8 8-5 1-7 3-8 8-1-5-3-7-8-8 5-1 7-3 8-8z',
   check: 'M5 12.5l4.5 4.5L19 7',
+  mail: 'M4 6h16v12H4zM4 7l8 6 8-6',
+  photos: 'M4 5h16v14H4zM4 15l5-5 4 4 3-3 4 4M9 9.5h.01',
+  sprout: 'M12 21v-9M12 12c0-4-3-6-7-6 0 4 2 6 7 6zM12 14c0-3 2-5 6-5 0 3-2 5-6 5z',
+  lock: 'M7 11V8a5 5 0 0110 0v3M6 11h12v9H6z',
+  play: 'M8 5l11 7-11 7z',
   stop: 'M7 7h10v10H7z',
 };
 
@@ -23,3 +28,4 @@ export default function Icon({ name, size = 22 }: { name: keyof typeof P; size?:
     </svg>
   );
 }
+

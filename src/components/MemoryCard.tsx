@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import type { Memory } from '../types';
 import { ageText, formatDate } from '../lib/format';
 
-function useUrl(m: Memory): string | null {
+export function useMediaUrl(m: Memory): string | null {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     if (m.svg) {
@@ -18,7 +18,7 @@ function useUrl(m: Memory): string | null {
 }
 
 export default function MemoryCard({ m, birth }: { m: Memory; birth: string | null }) {
-  const url = useUrl(m);
+  const url = useMediaUrl(m);
   const age = birth ? ageText(birth, m.date) : null;
   return (
     <article className="memory">
@@ -45,3 +45,4 @@ export default function MemoryCard({ m, birth }: { m: Memory; birth: string | nu
     </article>
   );
 }
+

@@ -2,19 +2,21 @@
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { repo } from './data';
 import { demoMemories } from './data/demo';
-import { sortMemories, type Node } from './lib/layout';
+import { sortMemories } from './lib/layout';
+import { ageText, todayStr } from './lib/format';
 import type { Memory } from './types';
 import Intro from './components/Intro';
-import Garden from './components/Garden';
+import Shell, { type Tab } from './components/Shell';
 import AddMemory from './components/AddMemory';
 import Viewer from './components/Viewer';
 import Menu from './components/Menu';
-import Discover from './components/Discover';
-import Timeline from './components/Timeline';
-import Letters from './components/Letters';
+import MemoriesPage from './pages/MemoriesPage';
+import LettersPage from './pages/LettersPage';
+import GrowthPage from './pages/GrowthPage';
+import DiscoverPage from './pages/DiscoverPage';
 
-type Phase = 'intro' | 'entering' | 'garden';
-type Overlay = null | 'add' | 'menu' | 'discover' | 'timeline' | 'letters' | { view: string };
+type Phase = 'intro' | 'entering' | 'main';
+type Overlay = null | 'add' | 'menu' | { view: string };
 
 const seenIntro = () => {
   try { return localStorage.getItem('yaman-intro') === '1'; } catch { return false; }
@@ -24,8 +26,9 @@ const markIntro = () => {
 };
 
 export default function App() {
-  const [phase, setPhase] = useState<Phase>(seenIntro() ? 'garden' : 'intro');
+  const [phase, setPhase] = useState<Phase>(seenIntro() ? 'main' : 'intro');
   const [grown, setGrown] = useState(false);
+  const [tab, setTab] = useState<Tab>('memories');
   const [memories, setMemories] = useState<Memory[]>([]);
   const [birth, setBirth] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -66,16 +69,20 @@ export default function App() {
     setTimeout(() => setPhase('entering'), 1000);
   };
 
+  const openAdd = (date?: string) => {
+    setAddDate(date);
+    setOverlay('add');
+  };
+
   const save = async (items: Memory[]) => {
     await repo.addMemories(items);
     navigator.storage?.persist?.().catch(() => {});
-    // the sheet closes after its confirmation; the leaf sprouts as it closes
+    // the sheet closes after its confirmation; the new photo is then highlighted in the gallery
     setTimeout(async () => {
       await refresh();
-      const ids = new Set(items.map((i) => i.id));
-      setFresh(ids);
+      setFresh(new Set(items.map((i) => i.id)));
       setTimeout(() => setFresh(new Set()), 6000);
-    }, 1100);
+    }, 1200);
   };
 
   const remove = async (m: Memory) => {
@@ -89,8 +96,17 @@ export default function App() {
 
   const viewId = overlay && typeof overlay === 'object' ? overlay.view : null;
   const viewIndex = viewId ? sorted.findIndex((m) => m.id === viewId) : -1;
-  const open = (n: Node) => setOverlay({ view: n.items[0].id });
   const close = useCallback(() => setOverlay(null), []);
+
+  const age = birth ? ageText(birth, todayStr()) : null;
+  const sub =
+    tab === 'memories' || tab === 'growth' ? (
+      age ? (
+        <span>{age === 'يوم الميلاد' ? 'اليوم يوم ميلاده' : `عمره الآن ${age}`}</span>
+      ) : (
+        <button className="link small" onClick={() => setOverlay('menu')}>أضيفي تاريخ ميلاد يمان</button>
+      )
+    ) : null;
 
   if (fatal)
     return (
@@ -102,43 +118,36 @@ export default function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      {phase !== 'garden' && <Intro grown={grown} onEnter={enter} />}
+      {phase !== 'main' && <Intro grown={grown} onEnter={enter} />}
       {phase !== 'intro' && ready && (
         <motion.div
-          className="garden-layer"
+          className="main-layer"
           initial={phase === 'entering' ? { clipPath: 'circle(0% at 50% 58%)' } : { opacity: 0 }}
           animate={phase === 'entering' ? { clipPath: 'circle(150% at 50% 58%)' } : { opacity: 1 }}
           transition={{ duration: phase === 'entering' ? 1.6 : 0.6, ease: [0.5, 0, 0.2, 1] }}
-          onAnimationComplete={() => phase === 'entering' && setPhase('garden')}
+          onAnimationComplete={() => phase === 'entering' && setPhase('main')}
         >
-          <Garden
-            memories={memories}
-            birth={birth}
-            fresh={fresh}
-            onOpen={open}
-            onAdd={() => (setAddDate(undefined), setOverlay('add'))}
-            onMenu={() => setOverlay('menu')}
-            onDiscover={() => setOverlay('discover')}
-            onTimeline={() => setOverlay('timeline')}
-            onLetters={() => setOverlay('letters')}
-            onMemories={() => (sorted.length ? setOverlay({ view: sorted[sorted.length - 1].id }) : (setAddDate(undefined), setOverlay('add')))}
-          />
+          <Shell tab={tab} onTab={setTab} onMenu={() => setOverlay('menu')} sub={sub} fab={tab === 'memories' ? { label: 'أضيفي ذكرى', onClick: () => openAdd() } : undefined}>
+            {tab === 'memories' && <MemoriesPage memories={memories} fresh={fresh} onOpen={(id) => setOverlay({ view: id })} onAdd={() => openAdd()} />}
+            {tab === 'letters' && <LettersPage birth={birth} />}
+            {tab === 'growth' && <GrowthPage memories={memories} birth={birth} onAdd={(d) => openAdd(d)} onBirth={() => setOverlay('menu')} />}
+            {tab === 'discover' && (
+              <DiscoverPage
+                memories={memories}
+                birth={birth}
+                onAdd={() => openAdd()}
+                onGo={(id) => {
+                  setTab('memories');
+                  setOverlay({ view: id });
+                }}
+              />
+            )}
+          </Shell>
         </motion.div>
       )}
 
       <AnimatePresence>
         {overlay === 'add' && <AddMemory key="add" birth={birth} initialDate={addDate} onClose={close} onSave={save} />}
-        {overlay === 'letters' && <Letters key="letters" birth={birth} onClose={close} />}
-        {overlay === 'timeline' && (
-          <Timeline
-            key="timeline"
-            memories={memories}
-            birth={birth}
-            onClose={close}
-            onAdd={(d) => (setAddDate(d), setOverlay('add'))}
-            onBirth={() => setOverlay('menu')}
-          />
-        )}
         {overlay === 'menu' && (
           <Menu
             key="menu"
@@ -162,7 +171,6 @@ export default function App() {
             }}
           />
         )}
-        {overlay === 'discover' && <Discover key="discover" list={sorted} birth={birth} onClose={close} onAdd={() => (setAddDate(undefined), setOverlay('add'))} />}
         {viewIndex >= 0 && (
           <Viewer key="viewer" list={sorted} index={viewIndex} birth={birth} onIndex={(i) => setOverlay({ view: sorted[i].id })} onClose={close} onDelete={remove} />
         )}
@@ -172,5 +180,3 @@ export default function App() {
     </MotionConfig>
   );
 }
-
-

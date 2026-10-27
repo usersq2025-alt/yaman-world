@@ -3,10 +3,9 @@ import { repo } from '../data';
 import type { Letter, LetterMeta } from '../types';
 import { daysUntil, formatDate, num, todayStr, addDays } from '../lib/format';
 import { addMonths } from '../lib/timeline';
-import Sheet from './Sheet';
-import Icon from './Icons';
+import Icon from '../components/Icons';
 
-function Envelope({ open, sealed }: { open: boolean; sealed: boolean }) {
+export function Envelope({ open, sealed }: { open: boolean; sealed: boolean }) {
   return (
     <svg className={`env ${open ? 'is-open' : ''}`} viewBox="0 0 120 84" aria-hidden="true">
       <rect x="3" y="12" width="114" height="69" rx="8" fill="#E8DCCB" stroke="#405A48" strokeOpacity=".35" />
@@ -172,7 +171,8 @@ function Compose({ birth, onDone, onCancel }: { birth: string | null; onDone: ()
   );
 }
 
-export default function Letters({ birth, onClose }: { birth: string | null; onClose: () => void }) {
+
+export default function LettersPage({ birth }: { birth: string | null }) {
   const [list, setList] = useState<LetterMeta[] | null>(null);
   const [mode, setMode] = useState<'list' | 'compose'>('list');
   const [reading, setReading] = useState<Letter | null>(null);
@@ -192,9 +192,9 @@ export default function Letters({ birth, onClose }: { birth: string | null; onCl
     }
   };
 
-  return (
-    <Sheet title="رسائل إلى يمان" onClose={onClose}>
-      {mode === 'compose' ? (
+  if (mode === 'compose')
+    return (
+      <div className="panel">
         <Compose
           birth={birth}
           onCancel={() => setMode('list')}
@@ -203,48 +203,58 @@ export default function Letters({ birth, onClose }: { birth: string | null; onCl
             load();
           }}
         />
-      ) : reading ? (
+      </div>
+    );
+
+  if (reading)
+    return (
+      <div className="panel">
         <Reader letter={reading} onBack={() => setReading(null)} />
-      ) : (
-        <>
-          {list && list.length === 0 && (
-            <div className="empty">
-              <Envelope open={false} sealed={false} />
-              <p>لا رسائل بعد. اكتبي رسالة، وحدّدي اليوم الذي سيفتحها فيه يمان.</p>
-            </div>
-          )}
-          <ul className="envs">
-            {list?.map((l) => {
-              const ready = l.openAt <= todayStr();
-              return (
-                <li key={l.id}>
-                  <button className={`env-btn ${ready ? 'ready' : ''}`} onClick={() => tap(l)} aria-label={`${l.occasion}، ${ready ? 'جاهزة للفتح' : `مغلقة حتى ${formatDate(l.openAt)}`}`}>
-                    <Envelope open={ready} sealed={!ready} />
-                    <span className="env-t">{l.occasion}</span>
-                    <span className="env-d">{ready ? 'افتحيها' : `تُفتح في ${formatDate(l.openAt)}`}</span>
-                  </button>
-                  {del === l.id ? (
-                    <div className="confirm">
-                      <p>حذف هذه الرسالة نهائيًا؟</p>
-                      <div className="row">
-                        <button className="danger" onClick={() => repo.removeLetter(l.id).then(() => (setDel(null), load()))}>نعم، احذفيها</button>
-                        <button className="ghost" onClick={() => setDel(null)}>أبقيها</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button className="link small danger-link" onClick={() => setDel(l.id)}>حذف</button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-          {msg && <p className="note" role="status">{msg}</p>}
-          <button className="primary wide" onClick={() => (setMsg(''), setMode('compose'))}>
-            <Icon name="plus" size={22} /> اكتبي رسالة جديدة
-          </button>
-        </>
-      )}
-    </Sheet>
+      </div>
+    );
+
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <p className="hint">رسائل تكتبينها اليوم، ويفتحها يمان في يوم تختارينه.</p>
+        <button className="primary" onClick={() => (setMsg(''), setMode('compose'))}>
+          <Icon name="plus" size={20} /> اكتبي رسالة
+        </button>
+      </div>
+
+      {list && list.length === 0 && <p className="empty-note">لا رسائل محفوظة بعد.</p>}
+
+      <ul className="letter-list">
+        {list?.map((l) => {
+          const ready = l.openAt <= todayStr();
+          return (
+            <li key={l.id} className={ready ? 'ready' : 'locked'}>
+              <button className="letter-row" onClick={() => tap(l)} aria-label={`${l.occasion}، ${ready ? 'جاهزة للفتح' : `مغلقة حتى ${formatDate(l.openAt)}`}`}>
+                <span className="env-ico"><Envelope open={ready} sealed={!ready} /></span>
+                <span className="letter-main">
+                  <span className="letter-title">{l.occasion}</span>
+                  <span className="letter-date">{formatDate(l.openAt)}</span>
+                </span>
+                <span className={`state ${ready ? 'ready' : 'locked'}`}>
+                  {ready ? 'جاهزة للفتح' : (<><Icon name="lock" size={14} /> مغلقة</>)}
+                </span>
+              </button>
+              {del === l.id ? (
+                <div className="confirm">
+                  <p>حذف هذه الرسالة نهائيًا؟</p>
+                  <div className="row">
+                    <button className="danger" onClick={() => repo.removeLetter(l.id).then(() => (setDel(null), load()))}>نعم، احذفيها</button>
+                    <button className="ghost" onClick={() => setDel(null)}>أبقيها</button>
+                  </div>
+                </div>
+              ) : (
+                <button className="link small danger-link" onClick={() => setDel(l.id)}>حذف</button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {msg && <p className="note" role="status">{msg}</p>}
+    </div>
   );
 }
-
