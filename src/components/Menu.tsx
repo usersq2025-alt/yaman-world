@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { repo } from '../data';
 import { todayStr } from '../lib/format';
 import Sheet from './Sheet';
@@ -18,6 +18,14 @@ export default function Menu({ birth, hasDemos, onBirth, onClose, onRemoveDemos,
   const file = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
+  const [space, setSpace] = useState('');
+  useEffect(() => {
+    navigator.storage?.estimate?.().then((e) => {
+      if (e.usage == null || !e.quota) return;
+      const mb = (n: number) => Math.round(n / 1048576).toLocaleString('ar-EG');
+      setSpace(`المستخدم الآن ${mb(e.usage)} ميغابايت من نحو ${mb(e.quota)}.`);
+    }).catch(() => {});
+  }, []);
 
   const doExport = async () => {
     setBusy(true);
@@ -74,6 +82,7 @@ export default function Menu({ birth, hasDemos, onBirth, onClose, onRemoveDemos,
           <button className="ghost" onClick={() => file.current?.click()} disabled={busy}><Icon name="upload" size={20} /> استرجاع من ملف</button>
           <input ref={file} type="file" accept="application/json,.json" hidden onChange={(e) => doImport(e.target.files?.[0])} />
         </div>
+        {space && <p className="hint">{space}</p>}
         {msg && <p className="note" role="status">{msg}</p>}
       </section>
 
@@ -89,3 +98,4 @@ export default function Menu({ birth, hasDemos, onBirth, onClose, onRemoveDemos,
     </Sheet>
   );
 }
+

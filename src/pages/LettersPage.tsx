@@ -4,6 +4,8 @@ import type { Letter, LetterMeta } from '../types';
 import { daysUntil, formatDate, num, todayStr, addDays } from '../lib/format';
 import { addMonths } from '../lib/timeline';
 import Icon from '../components/Icons';
+import { newId } from '../lib/id';
+import { storageErrorMessage } from '../lib/errors';
 
 export function Envelope({ open, sealed }: { open: boolean; sealed: boolean }) {
   return (
@@ -98,11 +100,11 @@ function Compose({ birth, onDone, onCancel }: { birth: string | null; onDone: ()
     if (file && file.size > 25 * 1024 * 1024) return setErr('الملف أكبر من 25 ميغابايت.');
     setSealing(true);
     try {
-      await repo.addLetter({ id: crypto.randomUUID(), kind, openAt: date, occasion: occasion === 'تاريخ آخر' ? 'رسالة إلى يمان' : occasion, createdAt: Date.now(), text: kind === 'text' ? text.trim() : undefined, blob: kind === 'audio' ? file! : undefined });
+      await repo.addLetter({ id: newId(), kind, openAt: date, occasion: occasion === 'تاريخ آخر' ? 'رسالة إلى يمان' : occasion, createdAt: Date.now(), text: kind === 'text' ? text.trim() : undefined, blob: kind === 'audio' ? file! : undefined });
       setTimeout(onDone, 1500);
-    } catch {
+    } catch (e) {
       setSealing(false);
-      setErr('تعذّر الحفظ على هذا الجهاز.');
+      setErr(storageErrorMessage(e));
     }
   };
 
@@ -258,3 +260,4 @@ export default function LettersPage({ birth }: { birth: string | null }) {
     </div>
   );
 }
+

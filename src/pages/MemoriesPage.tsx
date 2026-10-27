@@ -56,15 +56,16 @@ export default function MemoriesPage({ memories, fresh, onOpen, onAdd, onStorage
     );
 
   return (
-    <>
+    <div className="panel gallery-panel">
       <p className="gallery-note">{memoriesLabel(memories.length)}{real === 0 && " · تجريبية"} · <button className="link small" onClick={onStorage}>محفوظة على هذا الجهاز فقط</button></p>
       <ul className="tiles" aria-label="الذكريات">
       {sorted.map((m) => (
         <Tile key={m.id} m={m} fresh={fresh.has(m.id)} onOpen={() => onOpen(m.id)} />
       ))}
       </ul>
-    </>
+    </div>
   );
 }
+
 
 

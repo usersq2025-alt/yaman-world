@@ -1,6 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Kind, Memory } from '../types';
 import { todayStr } from '../lib/format';
+import { newId } from '../lib/id';
+import { prepareImage } from '../lib/image';
+import { storageErrorMessage } from '../lib/errors';
 import Sheet from './Sheet';
 import Icon from './Icons';
 
@@ -83,8 +86,10 @@ export default function AddMemory({ birth, initialDate, onClose, onSave }: Props
     setPhase('saving');
     try {
       const now = Date.now();
-      const items: Memory[] = files.map((f, i) => ({
-        id: crypto.randomUUID(),
+      navigator.storage?.persist?.().catch(() => {});
+      const prepared = kind === 'image' ? await Promise.all(files.map(prepareImage)) : files;
+      const items: Memory[] = prepared.map((f, i) => ({
+        id: newId(),
         kind,
         date,
         text: text.trim(),
@@ -95,9 +100,9 @@ export default function AddMemory({ birth, initialDate, onClose, onSave }: Props
       await onSave(items);
       setPhase('done');
       setTimeout(onClose, 1250);
-    } catch {
+    } catch (e) {
       setPhase('form');
-      setError('تعذّر الحفظ على هذا الجهاز. قد تكون مساحة التخزين ممتلئة.');
+      setError(storageErrorMessage(e));
     }
   };
 
@@ -188,3 +193,4 @@ export default function AddMemory({ birth, initialDate, onClose, onSave }: Props
     </Sheet>
   );
 }
+

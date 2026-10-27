@@ -57,21 +57,6 @@ button:disabled { opacity: .45; cursor: default; }
 .sway { animation: sway 5.5s ease-in-out infinite; animation-delay: var(--sd, 0s); transform-origin: 0 0; }
 
 /* intro */
-.intro { position: fixed; inset: 0; overflow-y: auto; display: grid; place-items: center; padding: 24px 24px calc(24px + env(safe-area-inset-bottom)); background: var(--ivory); }
-.intro-inner { width: 100%; max-width: 440px; text-align: center; display: flex; flex-direction: column; align-items: center; }
-.name { font-family: var(--display); font-weight: 700; font-size: clamp(64px, 20vw, 104px); line-height: 1.1; animation: blurIn 1.4s .2s both cubic-bezier(.2, .7, .2, 1); }
-.sub { font-family: var(--display); font-size: 22px; color: var(--soft); animation: fadeUp 1s .9s both; }
-.sapling { width: min(54vw, 210px); height: auto; max-height: 30dvh; margin: 8px 0 10px; overflow: visible; transform-origin: 50% 90%; transition: transform 1.1s cubic-bezier(.3, .8, .2, 1); }
-.sapling.grown { transform: scale(1.22); }
-.sapling .stem { stroke-dasharray: 1; animation: draw 1.4s .6s both ease-out; }
-.sapling .bud { animation: fadeUp .6s 2s both; transition: opacity .6s; }
-.sapling.grown .bud { opacity: 0; }
-.leaf-in { animation: popIn .9s var(--d) both; transform-box: view-box; }
-.sapling .more { opacity: 0; transition: opacity .8s .15s; }
-.sapling.grown .more { opacity: 1; }
-.line1 { font-family: var(--display); font-size: 25px; line-height: 1.6; animation: fadeUp 1s 2.1s both; }
-.line2 { margin-top: 6px; font-size: 16px; color: var(--soft); max-width: 340px; animation: fadeUp 1s 2.6s both; }
-.enter { margin-top: 24px; width: min(100%, 320px); animation: fadeUp 1s 3.2s both; }
 
 /* sheets */
 .scrim { position: fixed; inset: 0; z-index: 20; background: rgba(64, 90, 72, .32); display: flex; align-items: flex-end; justify-content: center; backdrop-filter: blur(2px); }
@@ -138,11 +123,6 @@ textarea { resize: vertical; line-height: 1.7; }
   .scrim { align-items: center; }
   .sheet { border-radius: 26px; max-height: 88dvh; }
   .g-name { font-size: 42px; }
-}
-@media (max-height: 640px) {
-  .sub { font-size: 18px; }
-  .line1 { font-size: 21px; }
-  .sapling { max-height: 24dvh; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; transition-delay: 0s !important; }
@@ -249,3 +229,22 @@ textarea { resize: vertical; line-height: 1.7; }
 
 
 .tiles > li { min-width: 0; }
+
+.gallery-panel { padding: 16px 14px 18px; }
+.gallery-panel .gallery-note { margin-bottom: 14px; }
+
+
+/* ===== opening page ===== */
+.intro { position: fixed; inset: 0; z-index: 6; background: #e6e0d0; }
+.intro-frame { position: relative; height: 100%; width: min(100vw, 520px); margin: 0 auto; overflow: hidden; background: #cfd9c4; }
+.intro-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 20% 58%; transform: scale(1.03); transition: transform 1.2s cubic-bezier(.3, .8, .2, 1); }
+.intro-bg.grown { transform: scale(1.14); transform-origin: 20% 70%; }
+.intro-veil { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(248, 245, 239, .94) 0%, rgba(248, 245, 239, .86) 34%, rgba(248, 245, 239, .35) 56%, rgba(248, 245, 239, 0) 74%, rgba(248, 245, 239, .08) 100%); }
+.intro-inner { position: relative; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; padding: calc(34px + env(safe-area-inset-top)) 26px calc(30px + env(safe-area-inset-bottom)); overflow-y: auto; }
+.intro-text { display: flex; flex-direction: column; align-items: center; }
+.name { font-family: var(--display); font-weight: 700; font-size: clamp(64px, 19vw, 96px); line-height: 1.15; animation: blurIn 1.4s .2s both cubic-bezier(.2, .7, .2, 1); }
+.sub { font-family: var(--display); font-size: 22px; color: var(--soft); animation: fadeUp 1s .9s both; }
+.line1 { margin-top: 18px; font-family: var(--display); font-size: 25px; line-height: 1.6; animation: fadeUp 1s 1.4s both; }
+.line2 { margin-top: 6px; font-size: 16px; color: var(--soft); max-width: 340px; animation: fadeUp 1s 1.9s both; }
+.enter { width: min(100%, 320px); flex: none; margin-top: 18px; animation: fadeUp 1s 2.4s both; }
+@media (max-height: 640px) { .sub { font-size: 18px; } .line1 { font-size: 21px; margin-top: 10px; } .name { font-size: 60px; } }

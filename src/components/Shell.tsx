@@ -14,7 +14,7 @@ export type Tab = 'memories' | 'letters' | 'growth' | 'discover';
  * screen is wider or narrower than the picture's 9:16.
  */
 export const TABS: { id: Tab; label: string; title: string; icon: 'photos' | 'mail' | 'sprout' | 'sparkle'; bg: string; pos: string; veil: [number, number, number]; blur: number }[] = [
-  { id: 'memories', label: 'الذكريات', title: 'الذكريات', icon: 'photos', bg: bgMemories, pos: '20% 50%', veil: [0.9, 0.84, 0.78], blur: 3 },
+  { id: 'memories', label: 'الذكريات', title: 'الذكريات', icon: 'photos', bg: bgMemories, pos: '20% 50%', veil: [0.9, 0.72, 0.04], blur: 0 },
   { id: 'letters', label: 'الرسائل', title: 'رسائل إلى يمان', icon: 'mail', bg: bgLetters, pos: '20% 60%', veil: [0.9, 0.72, 0.04], blur: 0 },
   { id: 'growth', label: 'النمو', title: 'رحلة النمو', icon: 'sprout', bg: bgGrowth, pos: '20% 55%', veil: [0.88, 0.62, 0.03], blur: 0 },
   { id: 'discover', label: 'اكتشفي', title: 'اكتشفي ذكرى', icon: 'sparkle', bg: bgDiscover, pos: '20% 60%', veil: [0.9, 0.7, 0.04], blur: 0 },
@@ -70,5 +70,6 @@ export default function Shell({ tab, onTab, onMenu, sub, fab, children }: Props)
     </div>
   );
 }
+
 
 
