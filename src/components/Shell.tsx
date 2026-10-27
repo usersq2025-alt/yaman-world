@@ -47,7 +47,7 @@ export default function Shell({ tab, onTab, onMenu, sub, fab, children }: Props)
   return (
     <div className="screen">
       <AnimatePresence initial={false}>
-        <motion.div key={cur.bg} className="bg-layer" initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }}>
+        <motion.div key={cur.bg} className="bg-layer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }}>
           <img className="bg" src={cur.bg} alt="" aria-hidden="true" style={{ objectPosition: cur.pos, filter: cur.blur ? `blur(${cur.blur}px) saturate(.92)` : 'saturate(.95)' }} decoding="async" />
           {/* calm veil: keeps the picture as atmosphere while text and photos stay easy to read */}
           <div className="veil" aria-hidden="true" style={{ ['--v1' as string]: cur.veil[0], ['--v2' as string]: cur.veil[1], ['--v3' as string]: cur.veil[2] }} />
@@ -58,13 +58,13 @@ export default function Shell({ tab, onTab, onMenu, sub, fab, children }: Props)
         <header className="bar">
           <div className="title-block">
             <AnimatePresence mode="popLayout" initial={false}>
-              <motion.h1 key={tab} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.22 }}>
+              <motion.h1 key={tab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
                 {cur.title}
               </motion.h1>
             </AnimatePresence>
             {sub && <div className="title-sub">{sub}</div>}
           </div>
-          <motion.button className="round" onClick={onMenu} aria-label="القائمة" whileTap={{ scale: 0.9 }} whileHover={{ scale: 1.05 }}>
+          <motion.button className="round" onClick={onMenu} aria-label="القائمة" whileTap={{ scale: 0.96 }}>
             <Icon name="menu" />
           </motion.button>
         </header>
@@ -74,9 +74,9 @@ export default function Shell({ tab, onTab, onMenu, sub, fab, children }: Props)
             key={tab}
             className="page"
             custom={dir}
-            initial={{ opacity: 0, x: dir * 34 }}
-            animate={{ opacity: 1, x: 0, transition: { duration: 0.42, ease: EASE } }}
-            exit={{ opacity: 0, x: dir * -34, transition: { duration: 0.18 } }}
+            initial={{ opacity: 0, x: dir * 10 }}
+            animate={{ opacity: 1, x: 0, transition: { duration: 0.32, ease: EASE } }}
+            exit={{ opacity: 0, transition: { duration: 0.12 } }}
           >
             {children}
           </motion.main>
@@ -90,12 +90,11 @@ export default function Shell({ tab, onTab, onMenu, sub, fab, children }: Props)
             className="fab"
             onClick={fab.onClick}
             aria-label={fab.label}
-            initial={{ scale: 0, rotate: -90 }}
-            animate={{ scale: 1, rotate: 0 }}
-            exit={{ scale: 0, rotate: 90 }}
-            transition={{ type: 'spring', stiffness: 340, damping: 22, delay: 0.15 }}
-            whileTap={{ scale: 0.9 }}
-            whileHover={{ scale: 1.06 }}
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.92 }}
+            transition={{ duration: 0.3, ease: EASE, delay: 0.1 }}
+            whileTap={{ scale: 0.96 }}
           >
             <Icon name="plus" size={28} />
           </motion.button>
@@ -106,10 +105,10 @@ export default function Shell({ tab, onTab, onMenu, sub, fab, children }: Props)
         {TABS.map((t) => (
           <button key={t.id} className={tab === t.id ? 'on' : ''} aria-current={tab === t.id ? 'page' : undefined} onClick={() => onTab(t.id)}>
             <span className="ico">
-              {tab === t.id && <motion.span layoutId="tab-pill" className="pill" transition={{ type: 'spring', stiffness: 420, damping: 32 }} />}
-              <motion.span className="ico-in" animate={{ y: tab === t.id ? -1 : 0, scale: tab === t.id ? 1.08 : 1 }} transition={{ type: 'spring', stiffness: 400, damping: 22 }}>
+              {tab === t.id && <motion.span layoutId="tab-pill" className="pill" transition={{ duration: 0.28, ease: EASE }} />}
+              <span className="ico-in">
                 <Icon name={t.icon} size={24} />
-              </motion.span>
+              </span>
             </span>
             <span>{t.label}</span>
           </button>
@@ -118,4 +117,5 @@ export default function Shell({ tab, onTab, onMenu, sub, fab, children }: Props)
     </div>
   );
 }
+
 

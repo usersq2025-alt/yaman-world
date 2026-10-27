@@ -118,10 +118,10 @@ export default function GrowthPage({ memories, birth, onAdd, onBirth }: Props) {
         <AnimatePresence mode="wait" initial={false} custom={dir}>
           <motion.section
             key={page.key}
-            initial={{ opacity: 0, x: dir * -40 }}
+            initial={{ opacity: 0, x: dir * -14 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: dir * 40 }}
-            transition={{ duration: 0.25 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.2}
@@ -175,4 +175,5 @@ export default function GrowthPage({ memories, birth, onAdd, onBirth }: Props) {
     </div>
   );
 }
+
 

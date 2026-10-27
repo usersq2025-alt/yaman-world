@@ -11,10 +11,10 @@ function Tile({ m, i, fresh, onOpen }: { m: Memory; i: number; fresh: boolean; o
   const kind = m.kind === 'image' ? 'صورة' : m.kind === 'video' ? 'فيديو' : 'تسجيل صوتي';
   return (
     <motion.li
-      initial={{ opacity: 0, y: 26, scale: 0.97 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '0px 0px -30px 0px' }}
-      transition={{ duration: 0.7, ease: [0.22, 0.8, 0.3, 1], delay: Math.min(i, 8) * 0.09 }}
+      transition={{ duration: 0.55, ease: [0.22, 0.8, 0.3, 1], delay: Math.min(i, 6) * 0.06 }}
     >
       <button className={`tile tile-${m.kind} ${fresh ? 'fresh' : ''}`} onClick={onOpen} aria-label={`${m.demo ? 'ذكرى تجريبية، ' : ''}${kind}، ${formatDate(m.date)}${m.text ? '، ' + m.text : ''}`}>
         <span className="tile-media">
@@ -82,3 +82,4 @@ export default function MemoriesPage({ memories, fresh, onOpen, onAdd, onStorage
     </div>
   );
 }
+

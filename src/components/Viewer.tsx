@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import type { Memory } from '../types';
 import { addDays, num, todayStr } from '../lib/format';
@@ -94,9 +94,9 @@ export default function Viewer({ list, index, birth, onIndex, onClose, onDelete,
     <Sheet title="ذكرى من حديقة يمان" onClose={onClose}>
       <motion.div
         key={m.id}
-        initial={{ opacity: 0, x: dir * -28 }}
+        initial={{ opacity: 0, x: dir * -12 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.35 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
         drag={editing ? false : 'x'}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.25}
@@ -175,3 +175,4 @@ export default function Viewer({ list, index, birth, onIndex, onClose, onDelete,
     </Sheet>
   );
 }
+

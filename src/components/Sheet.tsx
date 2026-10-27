@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+﻿import { motion } from 'motion/react';
 import { useEffect, useRef, type ReactNode } from 'react';
 import Icon from './Icons';
 
@@ -26,7 +26,7 @@ export default function Sheet({ title, onClose, children, closeLabel = 'إغلا
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
-        transition={{ type: 'spring', damping: 30, stiffness: 280 }}
+        transition={{ duration: 0.34, ease: [0.22, 0.8, 0.3, 1] }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sheet-head">
@@ -40,3 +40,4 @@ export default function Sheet({ title, onClose, children, closeLabel = 'إغلا
     </motion.div>
   );
 }
+
