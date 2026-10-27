@@ -1,9 +1,10 @@
-﻿import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { repo } from '../data';
 import type { Letter, LetterMeta } from '../types';
 import { addDays, daysUntil, formatDate, num, todayStr } from '../lib/format';
 import { addMonths } from '../lib/timeline';
 import { newId } from '../lib/id';
+import { prepareImage } from '../lib/image';
 import { storageErrorMessage } from '../lib/errors';
 import DateField from '../components/DateField';
 import Icon from '../components/Icons';
@@ -25,10 +26,24 @@ export function Envelope({ open, sealed }: { open: boolean; sealed: boolean }) {
   );
 }
 
+const MAX_PHOTOS = 6;
 const titleOf = (l: { occasion: string }) => l.occasion.trim() || 'رسالة إلى يمان';
+
+function useBlobUrls(blobs: Blob[]): string[] {
+  const [urls, setUrls] = useState<string[]>([]);
+  useEffect(() => {
+    const u = blobs.map((b) => URL.createObjectURL(b));
+    setUrls(u);
+    return () => u.forEach((x) => URL.revokeObjectURL(x));
+  }, [blobs]);
+  return urls;
+}
+
+const imagesLabel = (n: number) => (n === 1 ? 'صورة مرفقة' : n === 2 ? 'صورتان مرفقتان' : `${num(n)} صور مرفقة`);
 
 function Reader({ letter, onBack }: { letter: Letter; onBack: () => void }) {
   const [url, setUrl] = useState<string | null>(null);
+  const imgs = useBlobUrls(useMemo(() => letter.images ?? [], [letter]));
   useEffect(() => {
     if (!letter.blob) return;
     const u = URL.createObjectURL(letter.blob);
@@ -39,6 +54,11 @@ function Reader({ letter, onBack }: { letter: Letter; onBack: () => void }) {
     <div className="paper reveal">
       <h2 className="paper-title">{titleOf(letter)}</h2>
       <p className="hint">فُتحت في موعدها {formatDate(letter.openAt)}</p>
+      {imgs.length > 0 && (
+        <div className={`letter-photos n${Math.min(imgs.length, 3)}`}>
+          {imgs.map((u, i) => <img key={u} src={u} alt={`صورة مرفقة ${i + 1}`} style={{ animationDelay: `${i * 0.12}s` }} />)}
+        </div>
+      )}
       {letter.kind === 'text' ? <p className="letter-text">{letter.text}</p> : url && <audio src={url} controls preload="metadata" className="letter-audio" />}
       <button className="ghost" onClick={onBack}>العودة إلى الرسائل</button>
     </div>
@@ -53,6 +73,9 @@ function Compose({ existing, onDone, onCancel }: { existing?: Letter; onDone: ()
   const [kind, setKind] = useState<'text' | 'audio'>(existing?.kind ?? 'text');
   const [text, setText] = useState(existing?.text ?? '');
   const [file, setFile] = useState<File | null>(null);
+  const [images, setImages] = useState<Blob[]>(existing?.images ?? []);
+  const photoInput = useRef<HTMLInputElement>(null);
+  const previews = useBlobUrls(images);
   const [rec, setRec] = useState<MediaRecorder | null>(null);
   const [secs, setSecs] = useState(0);
   const [err, setErr] = useState('');
@@ -97,8 +120,10 @@ function Compose({ existing, onDone, onCancel }: { existing?: Letter; onDone: ()
     if (file && file.size > 25 * 1024 * 1024) return setErr('الملف أكبر من 25 ميغابايت.');
     setSealing(true);
     try {
-      if (existing) await repo.updateLetter(existing.id, { occasion: title.trim(), openAt: date, ...(existing.kind === 'text' ? { text: text.trim() } : {}) });
-      else await repo.addLetter({ id: newId(), kind, openAt: date, occasion: title.trim(), createdAt: Date.now(), text: kind === 'text' ? text.trim() : undefined, blob: kind === 'audio' ? file! : undefined });
+      navigator.storage?.persist?.().catch(() => {});
+      const photos = await Promise.all(images.map((b) => (b instanceof File ? prepareImage(b) : Promise.resolve(b))));
+      if (existing) await repo.updateLetter(existing.id, { occasion: title.trim(), openAt: date, images: photos, ...(existing.kind === 'text' ? { text: text.trim() } : {}) });
+      else await repo.addLetter({ id: newId(), kind, openAt: date, occasion: title.trim(), createdAt: Date.now(), text: kind === 'text' ? text.trim() : undefined, blob: kind === 'audio' ? file! : undefined, images: photos });
       setTimeout(onDone, 1400);
     } catch (e2) {
       setSealing(false);
@@ -165,6 +190,40 @@ function Compose({ existing, onDone, onCancel }: { existing?: Letter; onDone: ()
           {file && <p className="note">{file.name}</p>}
         </div>
       )}
+
+      <div className="attach">
+        <span className="attach-label">صور مرفقة (اختياري)</span>
+        <input
+          ref={photoInput}
+          type="file"
+          accept="image/*"
+          multiple
+          hidden
+          onChange={(e) => {
+            const picked = Array.from(e.target.files ?? []);
+            const tooBig = picked.find((f) => f.size > 25 * 1024 * 1024);
+            if (tooBig) setErr(`تجاوز «${tooBig.name}» الحد المسموح (25 ميغابايت).`);
+            setImages((cur) => [...cur, ...picked.filter((f) => f.size <= 25 * 1024 * 1024)].slice(0, MAX_PHOTOS));
+            if (photoInput.current) photoInput.current.value = '';
+          }}
+        />
+        {previews.length > 0 && (
+          <ul className="attach-list">
+            {previews.map((u, i) => (
+              <li key={u}>
+                <img src={u} alt="" />
+                <button type="button" className="x" aria-label={`إزالة الصورة ${i + 1}`} onClick={() => setImages((cur) => cur.filter((_, j) => j !== i))}>
+                  <Icon name="close" size={16} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <button type="button" className="ghost" onClick={() => photoInput.current?.click()} disabled={images.length >= MAX_PHOTOS}>
+          <Icon name="photos" size={20} /> {images.length ? 'أرفقي صورة أخرى' : 'أرفقي صورة'}
+        </button>
+        {images.length >= MAX_PHOTOS && <p className="hint">وصلتِ إلى الحد الأقصى: {num(MAX_PHOTOS)} صور لكل رسالة.</p>}
+      </div>
 
       {err && <p className="error" role="alert">{err}</p>}
       <p className="hint lock-hint">في هذه النسخة التجريبية يُخفى محتوى الرسالة حتى يوم الفتح حسب ساعة هذا الجهاز، لكن الحماية الحقيقية من الفتح المبكر تحتاج خادمًا يطبّقها، وهذا غير موجود بعد.</p>
@@ -239,15 +298,15 @@ export default function LettersPage() {
       {list && list.length === 0 && <p className="empty-note">لا رسائل محفوظة بعد.</p>}
 
       <ul className="letter-list">
-        {list?.map((l) => {
+        {list?.map((l, li) => {
           const ready = l.openAt <= todayStr();
           return (
-            <li key={l.id} className={ready ? 'ready' : 'locked'}>
+            <li key={l.id} className={ready ? 'ready' : 'locked'} style={{ ['--i' as string]: li }}>
               <button className="letter-row" onClick={() => tap(l)} aria-label={`${titleOf(l)}، ${ready ? 'جاهزة للفتح' : `مغلقة حتى ${formatDate(l.openAt)}`}`}>
                 <span className="env-ico"><Envelope open={ready} sealed={!ready} /></span>
                 <span className="letter-main">
                   <span className="letter-title">{titleOf(l)}</span>
-                  <span className="letter-date">{ready ? 'فُتحت' : 'تُفتح'} {formatDate(l.openAt)}{l.kind === 'audio' ? ' · صوتية' : ''}</span>
+                  <span className="letter-date">{ready ? 'فُتحت' : 'تُفتح'} {formatDate(l.openAt)}{l.kind === 'audio' ? ' · صوتية' : ''}{l.imageCount ? ` · ${imagesLabel(l.imageCount)}` : ''}</span>
                 </span>
                 <span className={`state ${ready ? 'ready' : 'locked'}`}>
                   {ready ? 'جاهزة للفتح' : (<><Icon name="lock" size={14} /> مغلقة</>)}
@@ -275,3 +334,6 @@ export default function LettersPage() {
     </div>
   );
 }
+
+
+

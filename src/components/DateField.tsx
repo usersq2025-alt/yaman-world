@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { addDays, formatDate, parse, toStr, todayStr } from '../lib/format';
 import Icon from './Icons';
@@ -31,6 +31,7 @@ export function Calendar({ value, min, max, shortcuts, onPick }: CalProps) {
   const start = value || (max && max < today ? max : min && min > today ? min : today);
   const [view, setView] = useState(() => ({ y: parse(start).getFullYear(), m: parse(start).getMonth() }));
   const [mode, setMode] = useState<'days' | 'months' | 'years'>('days');
+  const [calDir, setCalDir] = useState(0);
   const [focus, setFocus] = useState<string>(value || start);
   const grid = useRef<HTMLDivElement>(null);
   const yearsRef = useRef<HTMLDivElement>(null);
@@ -49,6 +50,7 @@ export function Calendar({ value, min, max, shortcuts, onPick }: CalProps) {
   }, [view]);
 
   const shift = (dm: number) => {
+    setCalDir(dm > 0 ? -1 : 1);
     const d = new Date(view.y, view.m + dm, 1);
     setView({ y: d.getFullYear(), m: d.getMonth() });
   };
@@ -92,7 +94,7 @@ export function Calendar({ value, min, max, shortcuts, onPick }: CalProps) {
           <div className="cal-week" role="row">
             {WEEK.map((w) => <span key={w.l} role="columnheader" aria-label={w.l}>{w.s}</span>)}
           </div>
-          <div className="cal-days">
+          <div className="cal-days" key={`${view.y}-${view.m}`} style={{ ['--cal-dir' as string]: calDir }}>
             {cells.map((d, i) =>
               d ? (
                 <button
@@ -180,3 +182,4 @@ export default function DateField({ label, value, onChange, placeholder = 'اخ�
     </div>
   );
 }
+

@@ -22,11 +22,14 @@ export interface LetterMeta {
   openAt: string;
   occasion: string;
   createdAt: number;
+  /** number of attached photos (the photos themselves live with the body) */
+  imageCount?: number;
 }
 
 export interface Letter extends LetterMeta {
   text?: string;
   blob?: Blob;
+  images?: Blob[];
 }
 
 export interface Settings {
@@ -57,9 +60,10 @@ export interface MemoryRepo {
   removeLetter(id: string): Promise<void>;
   /** For the author editing a letter: returns the full letter even while it is still locked. */
   getLetterForEdit(id: string): Promise<Letter | null>;
-  updateLetter(id: string, patch: { occasion?: string; openAt?: string; text?: string }): Promise<void>;
+  updateLetter(id: string, patch: { occasion?: string; openAt?: string; text?: string; images?: Blob[] }): Promise<void>;
   exportBackup(): Promise<Blob>;
   importBackup(file: File): Promise<number>;
 }
+
 
 

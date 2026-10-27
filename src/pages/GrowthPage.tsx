@@ -92,8 +92,8 @@ export default function GrowthPage({ memories, birth, onAdd, onBirth }: Props) {
 
       {years.length > 1 && (
         <div className="years-strip" ref={yearStrip} role="tablist" aria-label="السنوات">
-          {years.map((y) => (
-            <button key={y.id} role="tab" aria-selected={y.id === year.id} aria-current={y.id === year.id} className={`year-chip ${y.id === year.id ? 'on' : ''}`} onClick={() => pickYear(y)}>
+          {years.map((y, yi) => (
+            <button key={y.id} style={{ ['--i' as string]: Math.min(yi, 10) }} role="tab" aria-selected={y.id === year.id} aria-current={y.id === year.id} className={`year-chip ${y.id === year.id ? 'on' : ''}`} onClick={() => pickYear(y)}>
               <b>{y.label}</b>
               <small>{y.sub ? `${y.sub} · ${num(y.count)}` : memoriesLabel(y.count)}</small>
             </button>
@@ -102,10 +102,10 @@ export default function GrowthPage({ memories, birth, onAdd, onBirth }: Props) {
       )}
 
       <div className="months-grid" role="tablist" aria-label="الأشهر">
-        {year.pages.map((p) => {
+        {year.pages.map((p, pi) => {
           const n = pages.indexOf(p);
           return (
-            <button key={p.key} role="tab" aria-selected={n === idx} aria-current={n === idx} aria-label={`${p.title}، ${memoriesLabel(p.items.length)}`} className={`month-cell ${n === idx ? 'on' : ''} ${p.items.length ? 'has' : ''}`} onClick={() => go(n)}>
+            <button key={p.key} style={{ ['--i' as string]: pi }} role="tab" aria-selected={n === idx} aria-current={n === idx} aria-label={`${p.title}، ${memoriesLabel(p.items.length)}`} className={`month-cell ${n === idx ? 'on' : ''} ${p.items.length ? 'has' : ''}`} onClick={() => go(n)}>
               <span className="mc-label">{cellLabel(p, byAge)}</span>
               {byAge && <small>شهر</small>}
               {p.items.length > 0 && <em>{num(p.items.length)}</em>}
@@ -175,3 +175,4 @@ export default function GrowthPage({ memories, birth, onAdd, onBirth }: Props) {
     </div>
   );
 }
+

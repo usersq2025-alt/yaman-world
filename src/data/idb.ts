@@ -95,12 +95,12 @@ export const idbRepo: MemoryRepo = {
     return ((await run<LetterMeta[]>(LET, 'readonly', (s) => s.getAll())) ?? []) as LetterMeta[];
   },
   async addLetter(l) {
-    const { text, blob, ...meta } = l;
+    const { text, blob, images, ...meta } = l;
     const d = await db();
     await new Promise<void>((resolve, reject) => {
       const t = d.transaction([LET, LET_BODY], 'readwrite');
-      t.objectStore(LET).put(meta);
-      t.objectStore(LET_BODY).put({ id: l.id, text, blob });
+      t.objectStore(LET).put({ ...meta, imageCount: images?.length ?? 0 });
+      t.objectStore(LET_BODY).put({ id: l.id, text, blob, images });
       t.oncomplete = () => resolve();
       t.onerror = t.onabort = () => reject(t.error);
     });
@@ -108,24 +108,36 @@ export const idbRepo: MemoryRepo = {
   async openLetter(id) {
     const meta = await run<LetterMeta>(LET, 'readonly', (s) => s.get(id));
     if (!meta || meta.openAt > todayStr()) return null;
-    const body = await run<{ text?: string; blob?: Blob }>(LET_BODY, 'readonly', (s) => s.get(id));
-    return { ...meta, text: body?.text, blob: body?.blob };
+    const body = await run<{ text?: string; blob?: Blob; images?: Blob[] }>(LET_BODY, 'readonly', (s) => s.get(id));
+    return { ...meta, text: body?.text, blob: body?.blob, images: body?.images ?? [] };
   },
   async getLetterForEdit(id) {
     const meta = await run<LetterMeta>(LET, 'readonly', (s) => s.get(id));
     if (!meta) return null;
-    const body = await run<{ text?: string; blob?: Blob }>(LET_BODY, 'readonly', (s) => s.get(id));
-    return { ...meta, text: body?.text, blob: body?.blob };
+    const body = await run<{ text?: string; blob?: Blob; images?: Blob[] }>(LET_BODY, 'readonly', (s) => s.get(id));
+    return { ...meta, text: body?.text, blob: body?.blob, images: body?.images ?? [] };
   },
   async updateLetter(id, patch) {
     const meta = await run<LetterMeta>(LET, 'readonly', (s) => s.get(id));
     if (!meta) return;
     const d = await db();
-    const body = await run<{ id: string; text?: string; blob?: Blob }>(LET_BODY, 'readonly', (s) => s.get(id));
+    const body = await run<{ id: string; text?: string; blob?: Blob; images?: Blob[] }>(LET_BODY, 'readonly', (s) => s.get(id));
     await new Promise<void>((resolve, reject) => {
       const t = d.transaction([LET, LET_BODY], 'readwrite');
-      t.objectStore(LET).put({ ...meta, ...(patch.occasion !== undefined ? { occasion: patch.occasion } : {}), ...(patch.openAt ? { openAt: patch.openAt } : {}) });
-      if (patch.text !== undefined) t.objectStore(LET_BODY).put({ ...(body ?? { id }), id, text: patch.text });
+      t.objectStore(LET).put({
+        ...meta,
+        ...(patch.occasion !== undefined ? { occasion: patch.occasion } : {}),
+        ...(patch.openAt ? { openAt: patch.openAt } : {}),
+        ...(patch.images ? { imageCount: patch.images.length } : {}),
+      });
+      if (patch.text !== undefined || patch.images) {
+        t.objectStore(LET_BODY).put({
+          ...(body ?? { id }),
+          id,
+          ...(patch.text !== undefined ? { text: patch.text } : {}),
+          ...(patch.images ? { images: patch.images } : {}),
+        });
+      }
       t.oncomplete = () => resolve();
       t.onerror = t.onabort = () => reject(t.error);
     });
@@ -150,8 +162,10 @@ export const idbRepo: MemoryRepo = {
     }
     const letters = [];
     for (const meta of await this.listLetters()) {
-      const body = await run<{ text?: string; blob?: Blob }>(LET_BODY, 'readonly', (s) => s.get(meta.id));
-      letters.push({ ...meta, text: body?.text, data: body?.blob ? await blobToDataUrl(body.blob) : null });
+      const body = await run<{ text?: string; blob?: Blob; images?: Blob[] }>(LET_BODY, 'readonly', (s) => s.get(meta.id));
+      const images: string[] = [];
+      for (const im of body?.images ?? []) images.push(await blobToDataUrl(im));
+      letters.push({ ...meta, text: body?.text, data: body?.blob ? await blobToDataUrl(body.blob) : null, images });
     }
     const json = JSON.stringify({ format: 'yaman-world-backup', version: 2, exportedAt: new Date().toISOString(), birthDate, memories, letters });
     return new Blob([json], { type: 'application/json' });
@@ -172,8 +186,10 @@ export const idbRepo: MemoryRepo = {
     let restored = items.length;
     for (const raw of Array.isArray(data.letters) ? data.letters : []) {
       if (!raw?.id || haveL.has(raw.id)) continue;
-      const { data: url, ...rest } = raw;
-      await this.addLetter({ ...rest, blob: url ? await (await fetch(url)).blob() : undefined });
+      const { data: url, images: imgUrls, ...rest } = raw;
+      const images: Blob[] = [];
+      for (const u of Array.isArray(imgUrls) ? imgUrls : []) images.push(await (await fetch(u)).blob());
+      await this.addLetter({ ...rest, blob: url ? await (await fetch(url)).blob() : undefined, images });
       restored++;
     }
     if (data.birthDate && !(await this.getSettings()).birthDate) await this.saveSettings({ birthDate: data.birthDate });

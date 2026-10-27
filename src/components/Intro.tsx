@@ -5,7 +5,7 @@ export default function Intro({ grown, onEnter }: { grown: boolean; onEnter: () 
   return (
     <main className="intro">
       <div className="intro-frame">
-        <img className={`intro-bg ${grown ? 'grown' : ''}`} src={bg} alt="" aria-hidden="true" />
+        <div className="intro-bg-wrap"><img className={`intro-bg ${grown ? 'grown' : ''}`} src={bg} alt="" aria-hidden="true" /></div>
         <div className="intro-veil" aria-hidden="true" />
         <div className="intro-inner">
           <div className="intro-text">
@@ -22,3 +22,4 @@ export default function Intro({ grown, onEnter }: { grown: boolean; onEnter: () 
     </main>
   );
 }
+
